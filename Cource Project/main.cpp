@@ -1,4 +1,5 @@
 ﻿#include <iostream>
+#include <iomanip>
 #include "Structs.h"
 
 using std::cout;
@@ -7,8 +8,9 @@ using std::endl;
 
 #define ADMIN_FILE_PATH "admin.txt"
 #define MANAGERS_FILE_PATH "managers.txt"
+#define RECORDS_FILE_PATH "records.txt"
 
-/*=-=-=-=v0.6=-=-=-=*/
+/*=-=-=-=v0.7=-=-=-=*/
 
 /*
 * ЗАПИСИ *
@@ -16,11 +18,11 @@ using std::endl;
 
 * Список всех функций *
 1) Открыть файл											
-2) Добавить запись										+-
+2) Добавить запись										+
 3) Редактировать запись									+-
 4) Удалить записи										+-
 5) Сортировать файл										
-6) Просмотр данных										+-
+6) Просмотр данных										+
 7) Настройка отображения (поиск, фильтр, сортировка)	+-
 8) Изменение логина и пароля для админа					+
 9) Добавить менеджера									+
@@ -37,12 +39,12 @@ void ManagerPanel(User& user);
 void UserPanel(User& user);
 // Основные функции из списка
 // * Записи
-void AddRecord(User& user);
+void AddRecord();
 void EditRecord(User& user);
 void DeleteRecord(User& user);
 // * Отображение данных
 void ViewSettings(User& user);
-void PrintAllData(User& user);
+void PrintAllData();
 // * Админ функции
 void AddNewManager();
 void ChangeAdminDatas(User& user);
@@ -59,7 +61,7 @@ int main()
 		fprintf(file, "%s %s", "admin", "admin");
 		fclose(file);
 	}
-
+	
 	file = fopen(MANAGERS_FILE_PATH, "r");
 
 	if (file == NULL)
@@ -172,7 +174,7 @@ void AdminPanel(User& user)
 
 							break;
 						case 2:
-
+							AddRecord();
 							break;
 						case 3:
 
@@ -184,7 +186,7 @@ void AdminPanel(User& user)
 
 							break;
 						case 6:
-
+							PrintAllData();
 							break;
 						case 7:
 
@@ -270,7 +272,7 @@ void ManagerPanel(User& user)
 
 							break;
 						case 2:
-
+							AddRecord();
 							break;
 						case 3:
 
@@ -282,7 +284,7 @@ void ManagerPanel(User& user)
 
 							break;
 						case 6:
-
+							PrintAllData();
 							break;
 						case 7:
 
@@ -327,9 +329,60 @@ void UserPanel(User& user)
 	} while (choice != 0);
 }
 
-void AddRecord(User& user)
+void AddRecord()
 {
-	
+	system("cls");
+	Record record;
+
+	record.number_of_service++;
+
+	cout << "Поле ФИО" << endl;
+	cout << "Фамилия: ";
+	cin >> record.fio.second_name;
+	cout << "Имя: ";
+	cin >> record.fio.first_name;
+	cout << "Отчество: ";
+	cin >> record.fio.middle_name;
+
+	cout << endl;
+
+	cout << "Поле ДАТА" << endl;
+	cout << "День: ";
+	cin >> record.date.day;
+	cout << "Месяц: ";
+	cin >> record.date.month;
+	cout << "Год: ";
+	cin >> record.date.year;
+
+	cout << endl;
+
+	cout << "Поле ВРЕМЯ" << endl;
+	cout << "Час: ";
+	cin >> record.time.hour;
+	cout << "Минуты: ";
+	cin >> record.time.minute;
+
+	cout << endl;
+
+	cout << "Время ремонта: ";
+	cin >> record.repair_time;
+	cout << "Цена (BYN): ";
+	cin >> record.price;
+
+	// Записываем в файл
+
+	FILE* file;
+
+	if ((file = fopen(RECORDS_FILE_PATH, "a")) != NULL)
+	{
+		fprintf(file, "%u %s %c %c %u/%u/%u %u:%u %u %u", 
+			record.number_of_service, 
+			record.fio.second_name, record.fio.first_name[0], record.fio.middle_name[0],
+			record.date.day, record.date.month, record.date.year,
+			record.time.hour, record.time.minute,
+			record.repair_time, record.price);
+		fclose(file);
+	}
 }
 
 void EditRecord(User& user)
@@ -344,8 +397,45 @@ void ViewSettings(User& user)
 {
 }
 
-void PrintAllData(User& user)
+void PrintAllData()
 {
+	system("cls");
+	// Получаем данные из файла
+	FILE* file;
+
+	if ((file = fopen(RECORDS_FILE_PATH, "r")) == NULL)
+	{
+		cout << "Ошибка: файл с записями отсутствует!" << endl;
+		system("pause");
+		return;
+	}
+
+	Record record;
+	cout << "Номер услуги"
+		 << std::setw(15) << "ФИО"
+		 << std::setw(23) << "Дата"
+		 << std::setw(11) << "Время"
+		 << std::setw(20) << "Время ремонта"
+		 << std::setw(10) << "Цена" << endl;
+	while (!feof(file))
+	{
+		if (fscanf(file, "%u %s %c %c %u/%u/%u %u:%u %u %u",
+			&record.number_of_service,
+			&record.fio.second_name, &record.fio.first_name[0], &record.fio.middle_name[0],
+			&record.date.day, &record.date.month, &record.date.year,
+			&record.time.hour, &record.time.minute,
+			&record.repair_time, &record.price) > 0)
+		{
+			cout << std::setw(5) << record.number_of_service
+			<< std::setw(24) << record.fio.second_name << std::setw(2) << record.fio.first_name[0] << ". " << record.fio.middle_name[0] << ". "
+			<< std::setw(9) << record.date.day << "/" << record.date.month << "/" << record.date.year
+			<< std::setw(5) << record.time.hour << ":" << record.time.minute
+			<< std::setw(14) << record.repair_time
+			<< std::setw(16) << record.price << endl;
+		}
+	}
+
+	system("pause");
 }
 
 void AddNewManager()
