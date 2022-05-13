@@ -28,11 +28,11 @@ struct User
 
 struct FIO
 {
-	// Èìÿ
+	// Имя 
 	char first_name[32]		= {};
-	// Ôàìèëèÿ
+	// Фамилия
 	char second_name[32]	= {};
-	// Îò÷åñòâî
+	// Отчество
 	char middle_name[32]	= {};
 };
 
@@ -58,3 +58,5 @@ struct Record
 	unsigned repair_time = 0;
 	unsigned price = 0;
 };
+
+unsigned Record::number_of_service = 0;
