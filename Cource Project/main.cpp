@@ -1,5 +1,6 @@
 ﻿#include <iostream>
 #include <iomanip>
+#include <stdio.h>
 #include "Structs.h"
 
 using std::cout;
@@ -10,14 +11,14 @@ using std::endl;
 #define MANAGERS_FILE_PATH "managers.txt"
 #define RECORDS_FILE_PATH "records.txt"
 
-/*=-=-=-=v0.7=-=-=-=*/
+/*=-=-=-=v0.8=-=-=-=*/
 
 /*
 * ЗАПИСИ *
 Записи представляют из себя информацию о возможных услугах, которые добавляют менеджеры и админ.
 
 * Список всех функций *
-1) Открыть файл											
+1) Открыть файл											+
 2) Добавить запись										+
 3) Редактировать запись									+-
 4) Удалить записи										+-
@@ -38,14 +39,18 @@ void AdminPanel(User& user);
 void ManagerPanel(User& user);
 void UserPanel(User& user);
 // Основные функции из списка
-// * Записи
+// * Записи *
 void AddRecord();
-void EditRecord(User& user);
-void DeleteRecord(User& user);
-// * Отображение данных
-void ViewSettings(User& user);
-void PrintAllData();
-// * Админ функции
+void EditRecord();
+void DeleteRecord();
+// * Работа с данными * 
+void Search();
+void Filter();
+void Sort();
+// * Отображение данных *
+void PrintAllData();	// Выводит содержимое файла
+void Menu();
+// * Админ функции *
 void AddNewManager();
 void ChangeAdminDatas(User& user);
 
@@ -154,15 +159,12 @@ void AdminPanel(User& user)
 					{
 						system("cls");
 
-						cout << "1. Открыть файл" << endl;
-						cout << "2. Добавить запись" << endl;
-						cout << "3. Редактировать запись" << endl;
-						cout << "4. Удалить запись" << endl;
-						cout << "5. Сортировать файл" << endl;
-						cout << "6. Просмотреть данные" << endl;
-						cout << "7. Настройки отображения" << endl;
-						cout << "8. Добавить менеджера" << endl;
-						cout << "9. Изменить учетную запись" << endl;
+						cout << "1. Добавить запись" << endl;
+						cout << "2. Редактировать запись" << endl;
+						cout << "3. Удалить запись" << endl;
+						cout << "4. Просмотреть данные" << endl;
+						cout << "5. Добавить менеджера" << endl;
+						cout << "6. Изменить учетную запись" << endl;
 						cout << endl;
 						cout << "0. Выйти" << endl;
 						cout << "Ваш выбор: ";
@@ -171,34 +173,24 @@ void AdminPanel(User& user)
 						switch (choice)
 						{
 						case 1:
-
-							break;
-						case 2:
 							AddRecord();
 							break;
+						case 2:
+							EditRecord();
+							break;
 						case 3:
-
+							DeleteRecord();
 							break;
 						case 4:
-
+							Menu();
 							break;
 						case 5:
-
-							break;
-						case 6:
-							PrintAllData();
-							break;
-						case 7:
-
-							break;
-						case 8:
 							AddNewManager();
 							break;
-						case 9:
+						case 6:
 							ChangeAdminDatas(user);
 							break;
 						}
-
 					} while (choice != 0);
 					return;
 				}
@@ -254,13 +246,10 @@ void ManagerPanel(User& user)
 					{
 						system("cls");
 
-						cout << "1. Открыть файл" << endl;
-						cout << "2. Добавить запись" << endl;
-						cout << "3. Редактировать запись" << endl;
-						cout << "4. Удалить запись" << endl;
-						cout << "5. Сортировать файл" << endl;
-						cout << "6. Просмотреть данные" << endl;
-						cout << "7. Настройки отображения" << endl;
+						cout << "1. Добавить запись" << endl;
+						cout << "2. Редактировать запись" << endl;
+						cout << "3. Удалить запись" << endl;
+						cout << "4. Просмотреть данные" << endl;
 						cout << endl;
 						cout << "0. Выйти" << endl;
 						cout << "Ваш выбор: ";
@@ -269,25 +258,16 @@ void ManagerPanel(User& user)
 						switch (choice)
 						{
 						case 1:
-
-							break;
-						case 2:
 							AddRecord();
 							break;
+						case 2:
+							EditRecord();
+							break;
 						case 3:
-
+							DeleteRecord();
 							break;
 						case 4:
-
-							break;
-						case 5:
-
-							break;
-						case 6:
-							PrintAllData();
-							break;
-						case 7:
-
+							Menu();
 							break;
 						}
 					} while (choice != 0);	
@@ -300,41 +280,19 @@ void ManagerPanel(User& user)
 
 void UserPanel(User& user)
 {
-	int choice;
-
-	do
-	{
-		system("cls");
-
-		cout << "1. Открыть файл с данными" << endl;
-		cout << "2. Просмотреть все данные" << endl;
-		cout << "3. Настройка отображения" << endl;
-		cout << endl;
-		cout << "0. Выход" << endl;
-		cout << "Ваш выбор: ";
-		cin >> choice;
-
-		switch (choice)
-		{
-		case 1:
-
-			break;
-		case 2:
-
-			break;
-		case 3:
-
-			break;
-		}
-	} while (choice != 0);
+	Menu();
 }
 
 void AddRecord()
 {
 	system("cls");
 	Record record;
+	
+	cout << "Номер услуги: ";
+	cin >> record.number_of_service;
 
-	record.number_of_service++;
+	if (record.number_of_service == 0)
+		return;
 
 	cout << "Поле ФИО" << endl;
 	cout << "Фамилия: ";
@@ -370,12 +328,11 @@ void AddRecord()
 	cin >> record.price;
 
 	// Записываем в файл
-
 	FILE* file;
 
 	if ((file = fopen(RECORDS_FILE_PATH, "a")) != NULL)
 	{
-		fprintf(file, "%u %s %c %c %u/%u/%u %u:%u %u %u", 
+		fprintf(file, "%u %s %c %c %u/%u/%u %u:%u %u %u\n", 
 			record.number_of_service, 
 			record.fio.second_name, record.fio.first_name[0], record.fio.middle_name[0],
 			record.date.day, record.date.month, record.date.year,
@@ -385,21 +342,27 @@ void AddRecord()
 	}
 }
 
-void EditRecord(User& user)
+void EditRecord()
 {
 }
 
-void DeleteRecord(User& user)
+void DeleteRecord()
 {
+	
 }
 
-void ViewSettings(User& user)
-{
-}
-
-void PrintAllData()
+void Search()
 {
 	system("cls");
+
+	char search_word[32] = {};
+
+	PrintAllData();
+	
+	cout << endl;
+	cout << "Поиск: ";
+	cin >> search_word;
+
 	// Получаем данные из файла
 	FILE* file;
 
@@ -411,12 +374,94 @@ void PrintAllData()
 	}
 
 	Record record;
+
+	file = fopen(RECORDS_FILE_PATH, "r");
+
+	system("cls");
+	cout << "Результат: " << endl;
 	cout << "Номер услуги"
-		 << std::setw(15) << "ФИО"
-		 << std::setw(23) << "Дата"
-		 << std::setw(11) << "Время"
-		 << std::setw(20) << "Время ремонта"
-		 << std::setw(10) << "Цена" << endl;
+		<< std::setw(15) << "ФИО"
+		<< std::setw(23) << "Дата"
+		<< std::setw(11) << "Время"
+		<< std::setw(20) << "Время ремонта"
+		<< std::setw(10) << "Цена" << endl;
+	while (!feof(file))
+	{
+		if (fscanf(file, "%u %s %c %c %u/%u/%u %u:%u %u %u",
+			&record.number_of_service,
+			&record.fio.second_name, &record.fio.first_name[0], &record.fio.middle_name[0],
+			&record.date.day, &record.date.month, &record.date.year,
+			&record.time.hour, &record.time.minute,
+			&record.repair_time, &record.price) > 0)
+		{
+			if (strcmp(search_word, record.fio.second_name) == 0) {
+				cout << std::setw(5) << record.number_of_service
+					<< std::setw(24) << record.fio.second_name << std::setw(2) << record.fio.first_name[0] << ". " << record.fio.middle_name[0] << ". "
+					<< std::setw(9) << record.date.day << "/" << record.date.month << "/" << record.date.year
+					<< std::setw(5) << record.time.hour << ":" << record.time.minute
+					<< std::setw(14) << record.repair_time
+					<< std::setw(16) << record.price << endl;
+			}
+		}
+	}
+	fclose(file);
+	system("pause");
+}
+
+void Filter()
+{
+	system("cls");
+	PrintAllData();
+	cout << endl;
+	cout << "Filter() => :)" << endl;
+	system("pause");
+}
+
+void Sort()
+{
+	system("cls");
+
+	FILE* file_records;
+	FILE* file_temporary_records;
+
+	char chr;
+
+	file_records = fopen(RECORDS_FILE_PATH, "r");
+	file_temporary_records = fopen("temporary.txt", "w");
+
+	chr = fgetc(file_records);
+	while (!feof(file_records))
+	{
+		fputc(chr, file_temporary_records);
+		chr = fgetc(file_records);
+	}
+
+	fclose(file_records);
+	fclose(file_temporary_records);
+}
+
+void PrintAllData()
+{
+	// Получаем данные из файла
+	FILE* file;
+
+	if ((file = fopen(RECORDS_FILE_PATH, "r")) == NULL)
+	{
+		cout << "Ошибка: файл с записями отсутствует!" << endl;
+		system("pause");
+		return;
+	}
+
+	Record record;
+
+	file = fopen(RECORDS_FILE_PATH, "r");
+
+	cout << "Номер услуги"
+		<< std::setw(15) << "ФИО"
+		<< std::setw(23) << "Дата"
+		<< std::setw(11) << "Время"
+		<< std::setw(20) << "Время ремонта"
+		<< std::setw(10) << "Цена" << endl;
 	while (!feof(file))
 	{
 		if (fscanf(file, "%u %s %c %c %u/%u/%u %u:%u %u %u",
@@ -427,15 +472,48 @@ void PrintAllData()
 			&record.repair_time, &record.price) > 0)
 		{
 			cout << std::setw(5) << record.number_of_service
-			<< std::setw(24) << record.fio.second_name << std::setw(2) << record.fio.first_name[0] << ". " << record.fio.middle_name[0] << ". "
-			<< std::setw(9) << record.date.day << "/" << record.date.month << "/" << record.date.year
-			<< std::setw(5) << record.time.hour << ":" << record.time.minute
-			<< std::setw(14) << record.repair_time
-			<< std::setw(16) << record.price << endl;
+				<< std::setw(24) << record.fio.second_name << std::setw(2) << record.fio.first_name[0] << ". " << record.fio.middle_name[0] << ". "
+				<< std::setw(9) << record.date.day << "/" << record.date.month << "/" << record.date.year
+				<< std::setw(5) << record.time.hour << ":" << record.time.minute
+				<< std::setw(14) << record.repair_time
+				<< std::setw(16) << record.price << endl;
 		}
 	}
+	fclose(file);
+}
 
-	system("pause");
+void Menu()
+{
+	int choice = 0;
+
+	do
+	{
+		system("cls");
+
+		PrintAllData();
+
+		cout << endl;
+		cout << "1. Поиск" << endl;
+		cout << "2. Фильтр" << endl;
+		cout << "3. Сортировка" << endl;
+		cout << endl;
+		cout << "0. Выход" << endl;
+		cout << "Ваш выбор: ";
+		cin >> choice;
+
+		switch (choice)
+		{
+		case 1:
+			Search();
+			break;
+		case 2:
+			Filter();
+			break;
+		case 3:
+			Sort();
+			break;
+		}
+	} while (choice != 0);
 }
 
 void AddNewManager()

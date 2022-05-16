@@ -51,12 +51,10 @@ struct Time
 
 struct Record
 {
-	static unsigned number_of_service;
+	unsigned number_of_service = 0;
 	FIO fio;
 	Date date;
 	Time time;
 	unsigned repair_time = 0;
 	unsigned price = 0;
 };
-
-unsigned Record::number_of_service = 0;
