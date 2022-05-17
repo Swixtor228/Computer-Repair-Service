@@ -11,7 +11,7 @@ using std::endl;
 #define MANAGERS_FILE_PATH "managers.txt"
 #define RECORDS_FILE_PATH "records.txt"
 
-/*=-=-=-=v0.8=-=-=-=*/
+/*=-=-=-=v0.8.1=-=-=-=*/
 
 /*
 * ЗАПИСИ *
@@ -53,6 +53,8 @@ void Menu();
 // * Админ функции *
 void AddNewManager();
 void ChangeAdminDatas(User& user);
+// Доп. ф-ции
+bool CheckInputData(User& user, int mode);
 
 int main()
 {
@@ -78,6 +80,7 @@ int main()
 	User user;
 	Login(user);
 
+	_fcloseall();
 	return 0;
 }
 
@@ -114,168 +117,86 @@ void Login(User& user)
 
 void AdminPanel(User& user)
 {
-	// Проверяем наличиие файла
-	FILE* file;
+	if (CheckInputData(user, 1)) {
+		// Основная панель
+		int choice = 0;
 
-	if ((file = fopen(ADMIN_FILE_PATH, "r")) == NULL)
-	{
-		cout << "Ошибка: файл не найден!" << endl;
-		return;
-	}
-
-	do
-	{
-		system("cls");
-		// Запрашиваем логин и пароль
-		cout << "Чтобы выйти, введите 0" << endl;
-
-		cout << "Логин: ";
-		cin >> user.login;
-
-		if (strcmp(user.login, "0") == 0)
-			return;
-
-		cout << "Пароль: ";
-		cin >> user.password;
-
-		if (strcmp(user.password, "0") == 0)
-			return;
-
-		// Проверяем данные в файле
-		char file_login[32]		= {};
-		char file_password[32]	= {};
-
-		while (!feof(file))
+		do
 		{
-			if (fscanf(file, "%s%s", file_login, file_password) > 0)
+			system("cls");
+
+			cout << "1. Добавить запись" << endl;
+			cout << "2. Редактировать запись" << endl;
+			cout << "3. Удалить запись" << endl;
+			cout << "4. Просмотреть данные" << endl;
+			cout << "5. Добавить менеджера" << endl;
+			cout << "6. Изменить учетную запись" << endl;
+			cout << endl;
+			cout << "0. Выйти" << endl;
+			cout << "Ваш выбор: ";
+			cin >> choice;
+
+			switch (choice)
 			{
-				if (strcmp(user.login, file_login) == 0 && strcmp(user.password, file_password) == 0)
-				{
-					fclose(file);
-					// Основная панель
-					int choice = 0;
-
-					do
-					{
-						system("cls");
-
-						cout << "1. Добавить запись" << endl;
-						cout << "2. Редактировать запись" << endl;
-						cout << "3. Удалить запись" << endl;
-						cout << "4. Просмотреть данные" << endl;
-						cout << "5. Добавить менеджера" << endl;
-						cout << "6. Изменить учетную запись" << endl;
-						cout << endl;
-						cout << "0. Выйти" << endl;
-						cout << "Ваш выбор: ";
-						cin >> choice;
-
-						switch (choice)
-						{
-						case 1:
-							AddRecord();
-							break;
-						case 2:
-							EditRecord();
-							break;
-						case 3:
-							DeleteRecord();
-							break;
-						case 4:
-							Menu();
-							break;
-						case 5:
-							AddNewManager();
-							break;
-						case 6:
-							ChangeAdminDatas(user);
-							break;
-						}
-					} while (choice != 0);
-					return;
-				}
+			case 1:
+				AddRecord();
+				break;
+			case 2:
+				EditRecord();
+				break;
+			case 3:
+				DeleteRecord();
+				break;
+			case 4:
+				Menu();
+				break;
+			case 5:
+				AddNewManager();
+				break;
+			case 6:
+				ChangeAdminDatas(user);
+				break;
 			}
-		}	
-	} while (true);
+		} while (choice != 0);
+	}
 }
 
 void ManagerPanel(User& user)
 {
-	// Проверяем наличиие файла
-	FILE* file;
+	if (CheckInputData(user, 0)) {
+		// Основная панель
+		int choice = 0;
 
-	if ((file = fopen(MANAGERS_FILE_PATH, "r")) == NULL)
-	{
-		cout << "Ошибка: файл не найден!" << endl;
-		return;
-	}
-
-	do
-	{
-		system("cls");
-		// Запрашиваем логин и пароль
-		cout << "Чтобы выйти, введите 0" << endl;
-
-		cout << "Логин: ";
-		cin >> user.login;
-
-		if (strcmp(user.login, "0") == 0)
-			return;
-
-		cout << "Пароль: ";
-		cin >> user.password;
-
-		if (strcmp(user.password, "0") == 0)
-			return;
-
-		// Проверяем данные в файле
-		char file_login[32] = {};
-		char file_password[32] = {};
-
-		while (!feof(file))
+		do
 		{
-			if (fscanf(file, "%s%s", file_login, file_password) > 0)
+			system("cls");
+
+			cout << "1. Добавить запись" << endl;
+			cout << "2. Редактировать запись" << endl;
+			cout << "3. Удалить запись" << endl;
+			cout << "4. Просмотреть данные" << endl;
+			cout << endl;
+			cout << "0. Выйти" << endl;
+			cout << "Ваш выбор: ";
+			cin >> choice;
+
+			switch (choice)
 			{
-				if (strcmp(user.login, file_login) == 0 && strcmp(user.password, file_password) == 0)
-				{
-					fclose(file);
-					// Основная панель
-					int choice = 0;
-
-					do
-					{
-						system("cls");
-
-						cout << "1. Добавить запись" << endl;
-						cout << "2. Редактировать запись" << endl;
-						cout << "3. Удалить запись" << endl;
-						cout << "4. Просмотреть данные" << endl;
-						cout << endl;
-						cout << "0. Выйти" << endl;
-						cout << "Ваш выбор: ";
-						cin >> choice;
-
-						switch (choice)
-						{
-						case 1:
-							AddRecord();
-							break;
-						case 2:
-							EditRecord();
-							break;
-						case 3:
-							DeleteRecord();
-							break;
-						case 4:
-							Menu();
-							break;
-						}
-					} while (choice != 0);	
-					return;
-				}
+			case 1:
+				AddRecord();
+				break;
+			case 2:
+				EditRecord();
+				break;
+			case 3:
+				DeleteRecord();
+				break;
+			case 4:
+				Menu();
+				break;
 			}
-		}
-	} while (true);	
+		} while (choice != 0);
+	}
 }
 
 void UserPanel(User& user)
@@ -348,7 +269,54 @@ void EditRecord()
 
 void DeleteRecord()
 {
-	
+	system("cls");
+	// Открываем файл
+	FILE* file_records;
+	FILE* file_temp_records;
+
+	if ((file_records = fopen(RECORDS_FILE_PATH, "r")) == NULL) {
+		cout << "Ошибка: не удалось прочитать файл!" << endl;
+		system("pause");
+		return;
+	}
+
+	char buf[128] = {};
+	char* row = nullptr;
+
+	unsigned row_counter = 0;
+	unsigned delete_row = 0;
+
+	PrintAllData();
+
+	cout << endl;
+
+	cout << "Введите строчку: ";
+	cin >> delete_row;
+
+	if (delete_row == 0)
+		return;
+
+	// Копируем данные в буферный файл без нужной строки
+	if ((file_temp_records = fopen("temp_records.txt", "w")) != NULL) {
+		while ((row = fgets(buf, sizeof(buf), file_records)) && ++row_counter) 
+			if (row_counter != delete_row) 
+				fputs(row, file_temp_records);
+		
+		fclose(file_temp_records);
+		fclose(file_records);
+	}
+
+	// Перезаписываем основной файл records.txt файлом temp_records.txt
+	file_records = fopen(RECORDS_FILE_PATH, "w");
+	file_temp_records = fopen("temp_records.txt", "r");
+
+	while (row = fgets(buf, sizeof(buf), file_temp_records)) {
+		fputs(row, file_records);
+	}
+
+	fclose(file_temp_records);
+	fclose(file_records);
+	remove("temp_records.txt");
 }
 
 void Search()
@@ -448,7 +416,6 @@ void PrintAllData()
 	if ((file = fopen(RECORDS_FILE_PATH, "r")) == NULL)
 	{
 		cout << "Ошибка: файл с записями отсутствует!" << endl;
-		system("pause");
 		return;
 	}
 
@@ -574,4 +541,47 @@ void ChangeAdminDatas(User& user)
 		fprintf(file, "%s %s", login, password);
 		fclose(file);
 	}
+}
+
+bool CheckInputData(User& user, int mode)
+{
+	// Проверяем наличиие файла
+	FILE* file;
+
+	if ((file = fopen((mode == 1) ? ADMIN_FILE_PATH : MANAGERS_FILE_PATH, "r")) == NULL) {
+		cout << "Ошибка: файл не найден!" << endl;
+		return false;
+	}
+
+	do
+	{
+		system("cls");
+		// Запрашиваем логин и пароль
+		cout << "Чтобы выйти, введите 0" << endl;
+
+		cout << "Логин: ";
+		cin >> user.login;
+
+		if (strcmp(user.login, "0") == 0)
+			return false;
+
+		cout << "Пароль: ";
+		cin >> user.password;
+
+		if (strcmp(user.password, "0") == 0)
+			return false;
+
+		// Проверяем данные в файле
+		char file_login[32] = {};
+		char file_password[32] = {};
+
+		while (!feof(file)) {
+			if (fscanf(file, "%s%s", file_login, file_password) > 0) {
+				if (strcmp(user.login, file_login) == 0 && strcmp(user.password, file_password) == 0) {
+					fclose(file);
+					return true;
+				}
+			}
+		}
+	} while (true);
 }
