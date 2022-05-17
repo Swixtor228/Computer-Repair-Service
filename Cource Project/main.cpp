@@ -11,7 +11,7 @@ using std::endl;
 #define MANAGERS_FILE_PATH "managers.txt"
 #define RECORDS_FILE_PATH "records.txt"
 
-/*=-=-=-=v0.8.1=-=-=-=*/
+/*=-=-=-=v0.8.2=-=-=-=*/
 
 /*
 * ЗАПИСИ *
@@ -21,12 +21,13 @@ using std::endl;
 1) Открыть файл											+
 2) Добавить запись										+
 3) Редактировать запись									+-
-4) Удалить записи										+-
-5) Сортировать файл										
-6) Просмотр данных										+
-7) Настройка отображения (поиск, фильтр, сортировка)	+-
-8) Изменение логина и пароля для админа					+
-9) Добавить менеджера									+
+4) Удалить записи										+
+5) Поиск												+
+6) Сортировка											+-		
+7) Фильтрация											+-
+8) Просмотр данных										+
+9) Изменение логина и пароля для админа					+
+10) Добавить менеджера									+
 
 * РАБОТА С ЗАПИСЯМИ *
 Все настройки будут находиться в функции просмотра двнных. Сначала все данные выводятся на консоль, и ниже будут настройки (Поиск, Фильтр, Сортировка)
@@ -378,16 +379,16 @@ void Search()
 
 void Filter()
 {
-	system("cls");
+	/*system("cls");
 	PrintAllData();
 	cout << endl;
 	cout << "Filter() => :)" << endl;
-	system("pause");
+	system("pause");*/
 }
 
 void Sort()
 {
-	system("cls");
+	/*system("cls");
 
 	FILE* file_records;
 	FILE* file_temporary_records;
@@ -405,7 +406,7 @@ void Sort()
 	}
 
 	fclose(file_records);
-	fclose(file_temporary_records);
+	fclose(file_temporary_records);*/
 }
 
 void PrintAllData()
