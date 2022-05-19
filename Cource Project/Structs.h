@@ -52,6 +52,7 @@ struct Time
 struct Record
 {
 	unsigned number_of_service = 0;
+	char service_name[128] = {};
 	FIO fio;
 	Date date;
 	Time time;

@@ -7,31 +7,16 @@ using std::cout;
 using std::cin;
 using std::endl;
 
-#define ADMIN_FILE_PATH "admin.txt"
-#define MANAGERS_FILE_PATH "managers.txt"
-#define RECORDS_FILE_PATH "records.txt"
+#define FILE_ADMIN_PATH		"admin.txt"
+#define FILE_MANAGERS_PATH	"managers.txt"
+#define FILE_RECORDS_PATH	"records.txt"
+#define FILE_TEMP_PATH		"temp_records.txt"
 
-/*=-=-=-=v0.8.2=-=-=-=*/
+#define FORMAT_DATA			"%s %s"
+#define FORMAT_RECORDS		"%u %s %s %c %c %u/%u/%u %u:%u %u %u"
+#define FORMAT_RECORDS_END	"%u %s %s %c %c %u/%u/%u %u:%u %u %u\n"
 
-/*
-* ЗАПИСИ *
-Записи представляют из себя информацию о возможных услугах, которые добавляют менеджеры и админ.
-
-* Список всех функций *
-1) Открыть файл											+
-2) Добавить запись										+
-3) Редактировать запись									+-
-4) Удалить записи										+
-5) Поиск												+
-6) Сортировка											+-		
-7) Фильтрация											+-
-8) Просмотр данных										+
-9) Изменение логина и пароля для админа					+
-10) Добавить менеджера									+
-
-* РАБОТА С ЗАПИСЯМИ *
-Все настройки будут находиться в функции просмотра двнных. Сначала все данные выводятся на консоль, и ниже будут настройки (Поиск, Фильтр, Сортировка)
-*/
+/*=-=-=-=v1.0=-=-=-=*/
 
 // Функция, которая позволяет ВОЙТИ В СИСТЕМУ или ВОЙТИ КАК ПОЛЬЗОВАТЕЛЬ
 void Login(User& user);
@@ -41,7 +26,7 @@ void ManagerPanel(User& user);
 void UserPanel(User& user);
 // Основные функции из списка
 // * Записи *
-void AddRecord();
+Record AddRecord(const char* _FileName = FILE_RECORDS_PATH, const char* _Mode = "a");
 void EditRecord();
 void DeleteRecord();
 // * Работа с данными * 
@@ -56,25 +41,29 @@ void AddNewManager();
 void ChangeAdminDatas(User& user);
 // Доп. ф-ции
 bool CheckInputData(User& user, int mode);
+void WriteRecordToFile(FILE* _FileObj, Record& record, bool _CloseFile);
+FILE* OpenFile(const char* _FileName, const char* _Mode);
+void PrintHeader();
+void PrintRecord(Record& record);
 
 int main()
 {
 	setlocale(LC_ALL, "ru");
 
-	FILE* file = fopen(ADMIN_FILE_PATH, "r");
+	FILE* file = fopen(FILE_ADMIN_PATH, "r");
 
 	if (file == NULL)
 	{
-		file = fopen(ADMIN_FILE_PATH, "w");
-		fprintf(file, "%s %s", "admin", "admin");
+		file = fopen(FILE_ADMIN_PATH, "w");
+		fprintf(file, FORMAT_DATA, "admin", "admin");
 		fclose(file);
 	}
 	
-	file = fopen(MANAGERS_FILE_PATH, "r");
+	file = fopen(FILE_MANAGERS_PATH, "r");
 
 	if (file == NULL)
 	{
-		file = fopen(MANAGERS_FILE_PATH, "w");
+		file = fopen(FILE_MANAGERS_PATH, "w");
 		fclose(file);
 	}
 
@@ -119,7 +108,6 @@ void Login(User& user)
 void AdminPanel(User& user)
 {
 	if (CheckInputData(user, 1)) {
-		// Основная панель
 		int choice = 0;
 
 		do
@@ -165,7 +153,6 @@ void AdminPanel(User& user)
 void ManagerPanel(User& user)
 {
 	if (CheckInputData(user, 0)) {
-		// Основная панель
 		int choice = 0;
 
 		do
@@ -205,16 +192,13 @@ void UserPanel(User& user)
 	Menu();
 }
 
-void AddRecord()
+Record AddRecord(const char* _FileName, const char* _Mode)
 {
 	system("cls");
 	Record record;
 	
 	cout << "Номер услуги: ";
 	cin >> record.number_of_service;
-
-	if (record.number_of_service == 0)
-		return;
 
 	cout << "Поле ФИО" << endl;
 	cout << "Фамилия: ";
@@ -249,37 +233,84 @@ void AddRecord()
 	cout << "Цена (BYN): ";
 	cin >> record.price;
 
-	// Записываем в файл
-	FILE* file;
-
-	if ((file = fopen(RECORDS_FILE_PATH, "a")) != NULL)
-	{
-		fprintf(file, "%u %s %c %c %u/%u/%u %u:%u %u %u\n", 
-			record.number_of_service, 
-			record.fio.second_name, record.fio.first_name[0], record.fio.middle_name[0],
-			record.date.day, record.date.month, record.date.year,
-			record.time.hour, record.time.minute,
-			record.repair_time, record.price);
-		fclose(file);
-	}
+	if (_FileName != nullptr) {
+		FILE* file = OpenFile(_FileName, _Mode);
+		WriteRecordToFile(file, record, false);
+	} 
+	
+	return record;
 }
 
 void EditRecord()
 {
+	FILE* file_records = OpenFile(FILE_RECORDS_PATH, "r");
+
+	system("cls");
+
+	Record record;
+	Record temp_record;
+
+	unsigned required_line = 0;
+	unsigned line_counter = 0;
+
+	PrintAllData();
+
+	cout << endl;
+	cout << "Введите номер строки: ";
+	cin >> required_line;
+
+	if (required_line == 0)
+		return;
+
+	FILE* file_temp_records = OpenFile(FILE_TEMP_PATH, "w");
+
+	while (!feof(file_records))
+	{
+		if (fscanf(file_records, FORMAT_RECORDS,
+			&record.number_of_service, &record.service_name,
+			&record.fio.second_name, &record.fio.first_name[0], &record.fio.middle_name[0],
+			&record.date.day, &record.date.month, &record.date.year,
+			&record.time.hour, &record.time.minute,
+			&record.repair_time, &record.price) > 0) 
+		{
+			line_counter++;
+
+			if (line_counter == required_line) {
+				temp_record = AddRecord(nullptr);
+				WriteRecordToFile(file_temp_records, temp_record, false);
+			}
+
+			if (line_counter != required_line) {
+				WriteRecordToFile(file_temp_records, record, false);
+			}
+		}
+	}
+
+	fclose(file_temp_records);
+	fclose(file_records);
+
+	// Перезаписываем основной файл records.txt файлом temp_records.txt
+	file_records = OpenFile(FILE_RECORDS_PATH, "w");
+	file_temp_records = OpenFile(FILE_TEMP_PATH, "r");
+
+	char buf[128] = {};
+	char* row = nullptr;
+
+	while (row = fgets(buf, sizeof(buf), file_temp_records)) {
+		fputs(row, file_records);
+	}
+
+	fclose(file_temp_records);
+	fclose(file_records);
+	remove(FILE_TEMP_PATH);
 }
 
 void DeleteRecord()
 {
 	system("cls");
 	// Открываем файл
-	FILE* file_records;
-	FILE* file_temp_records;
-
-	if ((file_records = fopen(RECORDS_FILE_PATH, "r")) == NULL) {
-		cout << "Ошибка: не удалось прочитать файл!" << endl;
-		system("pause");
-		return;
-	}
+	FILE* file_records = OpenFile(FILE_RECORDS_PATH, "r");
+	FILE* file_temp_records = OpenFile(FILE_TEMP_PATH, "w");
 
 	char buf[128] = {};
 	char* row = nullptr;
@@ -298,7 +329,7 @@ void DeleteRecord()
 		return;
 
 	// Копируем данные в буферный файл без нужной строки
-	if ((file_temp_records = fopen("temp_records.txt", "w")) != NULL) {
+	if ((file_temp_records = fopen(FILE_TEMP_PATH, "w")) != NULL) {
 		while ((row = fgets(buf, sizeof(buf), file_records)) && ++row_counter) 
 			if (row_counter != delete_row) 
 				fputs(row, file_temp_records);
@@ -308,8 +339,8 @@ void DeleteRecord()
 	}
 
 	// Перезаписываем основной файл records.txt файлом temp_records.txt
-	file_records = fopen(RECORDS_FILE_PATH, "w");
-	file_temp_records = fopen("temp_records.txt", "r");
+	file_records = fopen(FILE_RECORDS_PATH, "w");
+	file_temp_records = fopen(FILE_TEMP_PATH, "r");
 
 	while (row = fgets(buf, sizeof(buf), file_temp_records)) {
 		fputs(row, file_records);
@@ -317,7 +348,7 @@ void DeleteRecord()
 
 	fclose(file_temp_records);
 	fclose(file_records);
-	remove("temp_records.txt");
+	remove(FILE_TEMP_PATH);
 }
 
 void Search()
@@ -333,43 +364,25 @@ void Search()
 	cin >> search_word;
 
 	// Получаем данные из файла
-	FILE* file;
-
-	if ((file = fopen(RECORDS_FILE_PATH, "r")) == NULL)
-	{
-		cout << "Ошибка: файл с записями отсутствует!" << endl;
-		system("pause");
-		return;
-	}
+	FILE* file = OpenFile(FILE_RECORDS_PATH, "r");
 
 	Record record;
 
-	file = fopen(RECORDS_FILE_PATH, "r");
-
 	system("cls");
 	cout << "Результат: " << endl;
-	cout << "Номер услуги"
-		<< std::setw(15) << "ФИО"
-		<< std::setw(23) << "Дата"
-		<< std::setw(11) << "Время"
-		<< std::setw(20) << "Время ремонта"
-		<< std::setw(10) << "Цена" << endl;
+	PrintHeader();
+
 	while (!feof(file))
 	{
-		if (fscanf(file, "%u %s %c %c %u/%u/%u %u:%u %u %u",
-			&record.number_of_service,
+		if (fscanf(file, FORMAT_RECORDS,
+			&record.number_of_service, &record.service_name,
 			&record.fio.second_name, &record.fio.first_name[0], &record.fio.middle_name[0],
 			&record.date.day, &record.date.month, &record.date.year,
 			&record.time.hour, &record.time.minute,
 			&record.repair_time, &record.price) > 0)
 		{
-			if (strcmp(search_word, record.fio.second_name) == 0) {
-				cout << std::setw(5) << record.number_of_service
-					<< std::setw(24) << record.fio.second_name << std::setw(2) << record.fio.first_name[0] << ". " << record.fio.middle_name[0] << ". "
-					<< std::setw(9) << record.date.day << "/" << record.date.month << "/" << record.date.year
-					<< std::setw(5) << record.time.hour << ":" << record.time.minute
-					<< std::setw(14) << record.repair_time
-					<< std::setw(16) << record.price << endl;
+			if ((strcmp(search_word, record.fio.second_name) == 0) || (strcmp(search_word, record.service_name) == 0)) {
+				PrintRecord(record);
 			}
 		}
 	}
@@ -379,72 +392,127 @@ void Search()
 
 void Filter()
 {
-	/*system("cls");
-	PrintAllData();
-	cout << endl;
-	cout << "Filter() => :)" << endl;
-	system("pause");*/
-}
-
-void Sort()
-{
-	/*system("cls");
-
-	FILE* file_records;
-	FILE* file_temporary_records;
-
-	char chr;
-
-	file_records = fopen(RECORDS_FILE_PATH, "r");
-	file_temporary_records = fopen("temporary.txt", "w");
-
-	chr = fgetc(file_records);
-	while (!feof(file_records))
-	{
-		fputc(chr, file_temporary_records);
-		chr = fgetc(file_records);
-	}
-
-	fclose(file_records);
-	fclose(file_temporary_records);*/
-}
-
-void PrintAllData()
-{
-	// Получаем данные из файла
-	FILE* file;
-
-	if ((file = fopen(RECORDS_FILE_PATH, "r")) == NULL)
-	{
-		cout << "Ошибка: файл с записями отсутствует!" << endl;
-		return;
-	}
-
+	// Считываем кол-во строчек
+	FILE* file_records = OpenFile(FILE_RECORDS_PATH, "r");
 	Record record;
 
-	file = fopen(RECORDS_FILE_PATH, "r");
+	system("cls");
 
-	cout << "Номер услуги"
-		<< std::setw(15) << "ФИО"
-		<< std::setw(23) << "Дата"
-		<< std::setw(11) << "Время"
-		<< std::setw(20) << "Время ремонта"
-		<< std::setw(10) << "Цена" << endl;
-	while (!feof(file))
+	int price = 0;
+
+	PrintAllData();
+
+	cout << endl;
+	cout << "Введите сумму: ";
+	cin >> price;
+
+	system("cls");
+
+	cout << "Результат: " << endl;
+	PrintHeader();
+
+	while (!feof(file_records))
 	{
-		if (fscanf(file, "%u %s %c %c %u/%u/%u %u:%u %u %u",
-			&record.number_of_service,
+		if (fscanf(file_records, FORMAT_RECORDS,
+			&record.number_of_service, &record.service_name,
 			&record.fio.second_name, &record.fio.first_name[0], &record.fio.middle_name[0],
 			&record.date.day, &record.date.month, &record.date.year,
 			&record.time.hour, &record.time.minute,
 			&record.repair_time, &record.price) > 0)
 		{
-			cout << std::setw(5) << record.number_of_service
-				<< std::setw(24) << record.fio.second_name << std::setw(2) << record.fio.first_name[0] << ". " << record.fio.middle_name[0] << ". "
-				<< std::setw(9) << record.date.day << "/" << record.date.month << "/" << record.date.year
-				<< std::setw(5) << record.time.hour << ":" << record.time.minute
-				<< std::setw(14) << record.repair_time
-				<< std::setw(16) << record.price << endl;
+			if (price >= record.price) {
+				PrintRecord(record);
+			}
+		}
+	}
+
+	fclose(file_records);
+	cout << endl;
+	system("pause");
+}
+
+void Sort()
+{
+	// Считываем кол-во строчек
+	FILE* file_records = OpenFile(FILE_RECORDS_PATH, "r");
+
+	char buf[128] = {};
+	char* row = nullptr;
+
+	unsigned row_counter = 0;
+
+	while (row = fgets(buf, sizeof(buf), file_records))
+		row_counter++;
+	fclose(file_records);
+
+	// Записываем массив records
+	file_records = OpenFile(FILE_RECORDS_PATH, "r");
+
+	Record* records = new Record[row_counter];
+	Record record;
+
+	for (unsigned i = 0; i < row_counter; i++)
+	{
+		if (fscanf(file_records, FORMAT_RECORDS,
+			&record.number_of_service, &record.service_name,
+			&record.fio.second_name, &record.fio.first_name[0], &record.fio.middle_name[0],
+			&record.date.day, &record.date.month, &record.date.year,
+			&record.time.hour, &record.time.minute,
+			&record.repair_time, &record.price) > 0)
+		{
+			records[i] = record;
+		}
+	}
+
+	// Сортируем массив
+	Record temp_record;
+
+	for (int i = 0; i < row_counter - 1; i++)
+	{
+		for (int j = 0; j < row_counter - 1; j++)
+		{
+			if (records[j + 1].price < records[j].price) {
+				temp_record = records[j + 1];
+				records[j + 1] = records[j];
+				records[j] = temp_record;
+			}
+		}
+	}
+
+	FILE* file_temp_sorted_records = OpenFile(FILE_RECORDS_PATH, "w");
+	// Перезапиисываем основной файл
+	for (unsigned i = 0; i < row_counter; i++)
+	{
+		WriteRecordToFile(file_temp_sorted_records, records[i], false);
+	}
+
+	fclose(file_records);
+	fclose(file_temp_sorted_records);
+
+	system("cls");
+
+	cout << "Файл успешно сортирован!" << endl;
+	system("pause");
+}
+
+void PrintAllData()
+{
+	// Получаем данные из файла
+	FILE* file = OpenFile(FILE_RECORDS_PATH, "r");
+
+	Record record;
+
+	PrintHeader();
+	while (!feof(file))
+	{
+		if (fscanf(file, FORMAT_RECORDS,
+			&record.number_of_service, &record.service_name,
+			&record.fio.second_name, &record.fio.first_name[0], &record.fio.middle_name[0],
+			&record.date.day, &record.date.month, &record.date.year,
+			&record.time.hour, &record.time.minute,
+			&record.repair_time, &record.price) > 0)
+		{
+			PrintRecord(record);
 		}
 	}
 	fclose(file);
@@ -507,7 +575,7 @@ void AddNewManager()
 	// Добавляем эти данные в файл
 	FILE* file;
 
-	if ((file = fopen(MANAGERS_FILE_PATH, "a")) != NULL)
+	if ((file = fopen(FILE_MANAGERS_PATH, "a")) != NULL)
 	{
 		fprintf(file, "%s %s\n", login, password);
 		fclose(file);
@@ -537,9 +605,9 @@ void ChangeAdminDatas(User& user)
 	// Добавляем эти данные в файл
 	FILE* file;
 
-	if ((file = fopen(ADMIN_FILE_PATH, "w")) != NULL)
+	if ((file = fopen(FILE_ADMIN_PATH, "w")) != NULL)
 	{
-		fprintf(file, "%s %s", login, password);
+		fprintf(file, FORMAT_DATA, login, password);
 		fclose(file);
 	}
 }
@@ -549,7 +617,7 @@ bool CheckInputData(User& user, int mode)
 	// Проверяем наличиие файла
 	FILE* file;
 
-	if ((file = fopen((mode == 1) ? ADMIN_FILE_PATH : MANAGERS_FILE_PATH, "r")) == NULL) {
+	if ((file = fopen((mode == 1) ? FILE_ADMIN_PATH : FILE_MANAGERS_PATH, "r")) == NULL) {
 		cout << "Ошибка: файл не найден!" << endl;
 		return false;
 	}
@@ -577,7 +645,7 @@ bool CheckInputData(User& user, int mode)
 		char file_password[32] = {};
 
 		while (!feof(file)) {
-			if (fscanf(file, "%s%s", file_login, file_password) > 0) {
+			if (fscanf(file, FORMAT_DATA, file_login, file_password) > 0) {
 				if (strcmp(user.login, file_login) == 0 && strcmp(user.password, file_password) == 0) {
 					fclose(file);
 					return true;
@@ -585,4 +653,47 @@ bool CheckInputData(User& user, int mode)
 			}
 		}
 	} while (true);
+}
+
+void WriteRecordToFile(FILE* _FileObj, Record& record, bool _CloseFile)
+{
+	fprintf(_FileObj, FORMAT_RECORDS_END,
+		record.number_of_service, record.service_name,
+		record.fio.second_name, record.fio.first_name[0], record.fio.middle_name[0],
+		record.date.day, record.date.month, record.date.year,
+		record.time.hour, record.time.minute,
+		record.repair_time, record.price);
+
+	if (_CloseFile)
+		fclose(_FileObj);
+}
+
+FILE* OpenFile(const char* _FileName, const char* _Mode)
+{
+	FILE* _FileObj;
+
+	if ((_FileObj = fopen(_FileName, _Mode)) == NULL) {
+		cout << "Ошибка: не удалось прочитать файл!" << endl;
+		system("pause");
+		return nullptr;
+	}
+
+	return _FileObj;
+}
+
+void PrintHeader()
+{
+	printf("%s %*s %*s %*s %*s %*s %*s\n", "Услуга", 13, "Описание", 17, "ФИО", 17, "Дата", 12, "Время", 11, "Ремонт", 12, "Сумма");
+}
+
+void PrintRecord(Record& record)
+{	
+	printf("%03u", record.number_of_service);
+	printf("%*s", 20, record.service_name);
+	printf("%*s %c. %c.     ", 15, record.fio.second_name, record.fio.first_name[0], record.fio.middle_name[0]);
+	printf("%02u/%02u/%04u     ", record.date.day, record.date.month, record.date.year);
+	printf("%02u:%02u", record.time.hour, record.time.minute);
+	printf("%*u", 10, record.repair_time);
+	printf("%*u", 15, record.price);
+	printf("\n");
 }

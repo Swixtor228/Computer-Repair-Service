@@ -1,2 +1,5 @@
 ﻿  main.cpp
+D:\Programming\C++\Computer-Repair-Service\Cource Project\main.cpp(445,14): warning C4018: >=: несоответствие типов со знаком и без знака
+D:\Programming\C++\Computer-Repair-Service\Cource Project\main.cpp(491,20): warning C4018: <: несоответствие типов со знаком и без знака
+D:\Programming\C++\Computer-Repair-Service\Cource Project\main.cpp(493,21): warning C4018: <: несоответствие типов со знаком и без знака
   Cource Project.vcxproj -> D:\Programming\C++\Computer-Repair-Service\x64\Debug\Cource Project.exe
